@@ -7,27 +7,29 @@ const int N = 100;
 const int K = 10;
 const int d = 100;
 
-// функция получения индекса
+// function for getting of the index
 int dataIndex(int i, int j, int k, int NINT) {
 	return k + NINT * j + NINT * NINT * i;
 }
 
-// функция для заполнения гистограммы по отдельным значениям
+// function for filling a histogram for separate values
 void fill_hist(int hist[], int value, int NINT, int boxsize) {
 	int ind = value * K / boxsize;
 	for (int i = 0; i <= ind; i++)
 		hist[i]++;
 }
 
-// функция для полного заполнения гистограммы (параллельно)
+// function full filling of the histogram (in parallel)
 void create_hist(int hist[], int* data, int NINT, int boxsize) {
 	for (int i = 0; i <= K; i++)
 		hist[i] = 0;
+	
 #pragma omp parallel
 	{
 		int private_hist[K + 1];
 		for (int i = 0; i <= K; i++)
 			private_hist[i] = 0;
+		
 #pragma omp for nowait
 		for (int i = 0; i < NINT; i++) {
 			for (int j = 0; j < NINT; j++) {
@@ -36,6 +38,7 @@ void create_hist(int hist[], int* data, int NINT, int boxsize) {
 				}
 			}
 		}
+		
 #pragma omp critical
 		{
 			for (int i = 0; i <= K; i++)
@@ -44,7 +47,7 @@ void create_hist(int hist[], int* data, int NINT, int boxsize) {
 	}
 }
 
-// функция для рисования гистограммы
+// function for histogram drawing
 void draw_hist(int hist[], int NINT, int boxsize) {
 	for (int i = 10; i > 0; i--) {
 		cout.width(8);
@@ -71,7 +74,7 @@ int main() {
 	int* data = new int[N * N * N];
 	int* flag = new int[N * N * N];
 
-	// заполним массивы псевдослучайными значениями
+	// fill the arrays with pseudorandom values
 #pragma omp parallel for
 	for (int i = 0; i < N; i++) {
 		srand(i);
@@ -83,15 +86,15 @@ int main() {
 		}
 	}
 
-	// создание гистограммы доз (большие или равные значения)
+	// create a dose histogram (greater or equal values)
 	int hist[K + 1];
 	create_hist(hist, data, N, d);
 
-	// рисуем гистограмму (последовательно и схематично в консоли)
+	// draw a histogram (sequentially and schematically in the console)
 	draw_hist(hist, N, d);
-	// rand создает равномерное распределение, поэтому график линейный
+	// rand creates a uniform distribution, so the graph is linear
 
-	// добавляем 10, если в массиве flag 1
+	// add 10, if flag=1 in array
 #pragma omp parallel for
 	for (int i = 0; i < N; i++) {
 		for (int j = 0; j < N; j++) {
@@ -102,11 +105,11 @@ int main() {
 		}
 	}
 
-	// создание гистограммы доз (большие или равные значения)
+	// create a dose histogram (greater or equal values)
 	int hist1[K + 1];
 	create_hist(hist1, data, N, d * 10);
 
-	// рисуем гистограмму (последовательно и схематично в консоли)
+	// draw a histogram (sequentially and schematically in the console)
 	draw_hist(hist1, N, d * 10);
 
 	delete[] data;
